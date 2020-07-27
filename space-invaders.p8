@@ -11,15 +11,14 @@ function _init()
     make_invader(33,20)
     make_invader(46,20)
     make_invader(59,20)
-    -- invaders={
-    --  make_invader(),
-    --  make_invader()
-    -- }
 end
 
 function _update()
     for obj in all(game_objects) do
         obj:update()
+        if obj:is_expired() then
+            del(game_objects, obj)
+        end
     end
 end
 
@@ -42,8 +41,28 @@ function make_player()
             if btn(1) then
                 self.x+=1
             end
+            if btnp(4) or btnp(5) then
+                self:shoot()
+            end
+        end,
+        shoot=function(self)
+            make_bullet(self.x+self.width/2,self.y)
         end
     })
+end
+
+function make_bullet(x, y)
+    return make_game_object("bullet",x,y,1,2,{
+        draw=function(self)
+            line(self.x,self.y,self.x,self.y+self.height,11)
+        end,
+        update=function(self)
+            self.y-=3
+        end,
+        is_expired=function(self)
+            return self.y < 0
+        end
+        })
 end
 
 function make_invader(x,y)
@@ -67,6 +86,9 @@ function make_game_object(kind,x,y,width,height,props)
         draw=function(self)
         end,
         update=function(self)
+        end,
+        is_expired=function(self)
+            return false
         end
     }
 

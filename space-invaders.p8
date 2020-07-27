@@ -8,9 +8,9 @@ function _init()
     game_objects={}
     make_player() 
     make_invader(20,20)
-    make_invader(33,20)
-    make_invader(46,20)
-    make_invader(59,20)
+    make_invader(35,20)
+    make_invader(50,20)
+    make_invader(65,20)
 end
 
 function _update()
@@ -23,7 +23,7 @@ function _update()
 end
 
 function _draw()
-    cls(1)
+    cls()
     for obj in all(game_objects) do
         obj:draw()
     end
@@ -36,10 +36,10 @@ function make_player()
         end,
         update=function(self)
             if btn(0) then
-                self.x-=1
+                self.x-=2
             end
             if btn(1) then
-                self.x+=1
+                self.x+=2
             end
             if btnp(4) or btnp(5) then
                 self:shoot()
@@ -54,7 +54,7 @@ end
 function make_bullet(x, y)
     return make_game_object("bullet",x,y,1,2,{
         draw=function(self)
-            line(self.x,self.y,self.x,self.y+self.height,11)
+            line(self.x,self.y,self.x,self.y+self.height,9)
         end,
         update=function(self)
             self.y-=3
@@ -67,10 +67,22 @@ end
 
 function make_invader(x,y)
     return make_game_object("invader",x,y,11,8, {
+        alive=true,
         draw=function(self)
-            sspr(24,0,self.width,self.height,self.x,self.y)
+            if self.alive then
+                sspr(24,0,self.width,self.height,self.x,self.y)
+            else
+                sspr(24,9,13,self.height,self.x,self.y)
+            end
+            -- self:draw_bounding_box(10)
         end,
         update=function(self)
+            foreach_game_object_of_kind("bullet", function(bullet)
+                if rects_overlapping(self.x,self.y,self.x+self.width,self.y+self.height,bullet.x,bullet.y,bullet.x+bullet.width,bullet.y+bullet.height) and self.alive then
+                    self.alive = false
+                    del(game_objects, bullet)
+                end
+            end)
         end
     })
 end
@@ -89,6 +101,9 @@ function make_game_object(kind,x,y,width,height,props)
         end,
         is_expired=function(self)
             return false
+        end,
+        draw_bounding_box=function(self,col)
+            rect(self.x,self.y,self.x+self.width,self.y+self.height,col)
         end
     }
 
@@ -99,6 +114,14 @@ function make_game_object(kind,x,y,width,height,props)
 
     -- add new object to list of game objects
     add(game_objects, obj)
+end
+
+function lines_overlapping(l1,r1,l2,r2)
+    return r1>l2 and r2>l1
+end
+
+function rects_overlapping(left1,top1,right1,bottom1,left2,top2,right2,bottom2)
+    return lines_overlapping(left1,right1,left2,right2) and lines_overlapping(top1,bottom1,top2,bottom2)
 end
 
 function foreach_game_object_of_kind(kind, callback)

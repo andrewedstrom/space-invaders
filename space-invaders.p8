@@ -68,7 +68,7 @@ function postprocess_move()
 
     should_switch_dir = false
     foreach_game_object_of_kind("invader", function(invader)
-        if invader.x >= 113 or invader.x <= 5 then
+        if invader.status == "alive" and (invader.x >= 113 or invader.x <= 5) then
             should_switch_dir = true
         end
     end)
@@ -169,7 +169,8 @@ function make_invader(x,y)
             return self.status == "dead"
         end,
         move=function(self)
-            self.x += swarm_direction*2
+            local new_x = self.x + swarm_direction*2
+            self.x = mid(5,new_x,113)
         end
     })
 end

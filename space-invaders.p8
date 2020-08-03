@@ -9,27 +9,18 @@ local move_timer
 local move_sounds = {0,1,2,3}
 local curr_sound
 local swarm_direction = 1 -- 1: right, -1: left
+local number_of_invaders
 
 function _init()
-    invader_speed=20
     move_timer=0
     time_to_move=false 
     curr_sound=1
 
     game_objects={}
     make_player() 
-    make_invader(20,20)
-    make_invader(35,20)
-    make_invader(50,20)
-    make_invader(65,20)
-    make_invader(80,20)
-    make_invader(95,20)
-    make_invader(20,30)
-    make_invader(35,30)
-    make_invader(50,30)
-    make_invader(65,30)
-    make_invader(80,30)
-    make_invader(95,30)
+
+    number_of_invaders = make_invaders()
+    invader_speed=number_of_invaders
 end
 
 function _update()
@@ -53,12 +44,14 @@ function move_swarm()
         move_timer = 0
         time_to_move = true
 
-        sfx(move_sounds[curr_sound])
-        curr_sound += 1
-        if curr_sound > #move_sounds then
-            curr_sound = 1
+        if number_of_invaders >= 1 then
+            sfx(move_sounds[curr_sound])
+            curr_sound += 1
+            if curr_sound > #move_sounds then
+                curr_sound = 1
+            end
+            return true
         end
-        return true
     end
     return false
 end
@@ -123,7 +116,19 @@ function make_bullet(x, y)
         is_expired=function(self)
             return self.y < 0
         end
-        })
+    })
+end
+
+function make_invaders()
+    local row
+    local cnt = 0
+    for row = 20, 50, 10 do
+        for col = 5, 95, 15 do
+            make_invader(col,row)
+            cnt += 1
+        end
+    end
+    return cnt
 end
 
 function make_invader(x,y)
@@ -140,21 +145,17 @@ function make_invader(x,y)
             elseif self.status == "dying" then
                 sspr(24,9,13,self.height,self.x-1,self.y)
             end
-            -- self:draw_bounding_box(10)
         end,
         update=function(self)
             -- todo who should own this?  bullet, invader, or someone else?
             foreach_game_object_of_kind("bullet", function(bullet)
                 if rects_overlapping(self.x,self.y,self.x+self.width,self.y+self.height,bullet.x,bullet.y,bullet.x+bullet.width,bullet.y+bullet.height) and self.status == "alive" then
                     self.status = "dying"
-                    invader_speed = max(invader_speed-2,2)
+                    invader_speed = max(invader_speed-1,0)
+                    number_of_invaders -= 1
                     del(game_objects, bullet)
                 end
             end)
-
-            -- if time_to_move then
-            --     self:move()
-            -- end
 
             if self.status == "dying" then
                 self.death_counter+=1
@@ -220,8 +221,6 @@ function foreach_game_object_of_kind(kind, callback)
         end
     end
 end
-
-
 
 __gfx__
 00000000000000b00000000000700000700000700000700000077000000000777700000000077000000007777000000000000000000000000000000000000000

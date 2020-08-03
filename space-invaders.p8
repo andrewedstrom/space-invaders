@@ -3,22 +3,83 @@ version 29
 __lua__
 
 local game_objects
+local hive_mind
+local invader_speed
+local move_timer
+local move_sounds = {0,1,2,3}
+local curr_sound
+local swarm_direction = 1 -- 1: right, -1: left
 
 function _init()
+    invader_speed=20
+    move_timer=0
+    time_to_move=false 
+    curr_sound=1
+
     game_objects={}
     make_player() 
     make_invader(20,20)
     make_invader(35,20)
     make_invader(50,20)
     make_invader(65,20)
+    make_invader(80,20)
+    make_invader(95,20)
+    make_invader(20,30)
+    make_invader(35,30)
+    make_invader(50,30)
+    make_invader(65,30)
+    make_invader(80,30)
+    make_invader(95,30)
 end
 
 function _update()
+    local moved_this_frame = move_swarm()
+
     for obj in all(game_objects) do
         obj:update()
         if obj:is_expired() then
             del(game_objects, obj)
         end
+    end
+
+    if moved_this_frame then
+        postprocess_move()
+    end
+end
+
+function move_swarm()
+    move_timer+=1
+    if move_timer > invader_speed then
+        move_timer = 0
+        time_to_move = true
+
+        sfx(move_sounds[curr_sound])
+        curr_sound += 1
+        if curr_sound > #move_sounds then
+            curr_sound = 1
+        end
+        return true
+    end
+    return false
+end
+
+function postprocess_move()
+    time_to_move = false
+
+    should_switch_dir = false
+    foreach_game_object_of_kind("invader", function(invader)
+        if invader.x >= 113 or invader.x <= 5 then
+            should_switch_dir = true
+        end
+    end)
+
+    if should_switch_dir then
+        swarm_direction *= -1
+
+        -- move all invaders down
+        foreach_game_object_of_kind("invader", function(invader)
+            invader.y += 5
+        end)
     end
 end
 
@@ -67,22 +128,48 @@ end
 
 function make_invader(x,y)
     return make_game_object("invader",x,y,11,8, {
-        alive=true,
+        status="alive", -- alive, dead, or dying
+        death_counter = 0,
         draw=function(self)
-            if self.alive then
-                sspr(24,0,self.width,self.height,self.x,self.y)
-            else
-                sspr(24,9,13,self.height,self.x,self.y)
+            if self.status == "alive" then
+                local sprite_x = 24
+                if curr_sound % 2 == 0 then
+                    sprite_x = 36
+                end
+                sspr(sprite_x,0,self.width,self.height,self.x,self.y)
+            elseif self.status == "dying" then
+                sspr(24,9,13,self.height,self.x-1,self.y)
             end
             -- self:draw_bounding_box(10)
         end,
         update=function(self)
+            -- todo who should own this?  bullet, invader, or someone else?
             foreach_game_object_of_kind("bullet", function(bullet)
-                if rects_overlapping(self.x,self.y,self.x+self.width,self.y+self.height,bullet.x,bullet.y,bullet.x+bullet.width,bullet.y+bullet.height) and self.alive then
-                    self.alive = false
+                if rects_overlapping(self.x,self.y,self.x+self.width,self.y+self.height,bullet.x,bullet.y,bullet.x+bullet.width,bullet.y+bullet.height) and self.status == "alive" then
+                    self.status = "dying"
+                    invader_speed = max(invader_speed-2,2)
                     del(game_objects, bullet)
                 end
             end)
+
+            -- if time_to_move then
+            --     self:move()
+            -- end
+
+            if self.status == "dying" then
+                self.death_counter+=1
+                if self.death_counter > 10 then
+                    self.status = "dead"
+                end
+            elseif time_to_move then
+                self:move()
+            end
+        end,
+        is_expired=function(self)
+            return self.status == "dead"
+        end,
+        move=function(self)
+            self.x += swarm_direction*2
         end
     })
 end
@@ -134,6 +221,7 @@ function foreach_game_object_of_kind(kind, callback)
 end
 
 
+
 __gfx__
 00000000000000b00000000000700000700000700000700000077000000000777700000000077000000007777000000000000000000000000000000000000000
 0000000000000bbb0000000000070007000070070007007000777700000777777777700000777700007777777777000000000000000000000000000000000000
@@ -152,3 +240,8 @@ __gfx__
 00000000000000000000000000070000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000700707007000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000007007000700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+__sfx__
+011100000215500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500005000050000500005000050000500005000000000000000000000000000000
+011000000115500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500105
+011000000015500100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100
+011000000515500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

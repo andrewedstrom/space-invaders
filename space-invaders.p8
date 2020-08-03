@@ -100,13 +100,13 @@ function make_player()
             end
         end,
         shoot=function(self)
-            make_bullet(self.x+self.width/2,self.y)
+            make_player_bullet(self.x+self.width/2,self.y)
         end
     })
 end
 
-function make_bullet(x, y)
-    return make_game_object("bullet",x,y,1,2,{
+function make_player_bullet(x, y)
+    return make_game_object("player_bullet",x,y,1,2,{
         draw=function(self)
             line(self.x,self.y,self.x,self.y+self.height,9)
         end,
@@ -118,6 +118,21 @@ function make_bullet(x, y)
         end
     })
 end
+
+function make_alien_bullet(x, y)
+    return make_game_object("alien_bullet",x,y,2,4,{
+        draw=function(self)
+            sspr(98,0,self.width,self.height,self.x,self.y)
+        end,
+        update=function(self)
+            self.y+=1.5
+        end,
+        is_expired=function(self)
+            return self.y > 128
+        end
+    })
+end
+
 
 function make_invaders()
     local row
@@ -147,8 +162,8 @@ function make_invader(x,y)
             end
         end,
         update=function(self)
-            -- todo who should own this?  bullet, invader, or someone else?
-            foreach_game_object_of_kind("bullet", function(bullet)
+            -- todo who should own this? bullet, invader, or someone else?
+            foreach_game_object_of_kind("player_bullet", function(bullet)
                 if rects_overlapping(self.x,self.y,self.x+self.width,self.y+self.height,bullet.x,bullet.y,bullet.x+bullet.width,bullet.y+bullet.height) and self.status == "alive" then
                     self.status = "dying"
                     invader_speed = max(invader_speed-1,0)
@@ -157,13 +172,18 @@ function make_invader(x,y)
                 end
             end)
 
-            if self.status == "dying" then
+            if self.status == "alive" then
+                if time_to_move then
+                    self:move()
+                end
+                if rnd(600) > 599 then
+                    make_alien_bullet(self.x+self.width/2,self.y)
+                end
+            else
                 self.death_counter+=1
                 if self.death_counter > 10 then
                     self.status = "dead"
                 end
-            elseif time_to_move then
-                self:move()
             end
         end,
         is_expired=function(self)
@@ -223,11 +243,11 @@ function foreach_game_object_of_kind(kind, callback)
 end
 
 __gfx__
-00000000000000b00000000000700000700000700000700000077000000000777700000000077000000007777000000000000000000000000000000000000000
-0000000000000bbb0000000000070007000070070007007000777700000777777777700000777700007777777777000000000000000000000000000000000000
-0070070000000bbb0000000000777777700070777777707007777770007777777777770007777770077777777777700000000000000000000000000000000000
-000770000bbbbbbbbbbb000007707770770077707770777077077077007770077007770077077077077700770077700000000000000000000000000000000000
-00077000bbbbbbbbbbbbb00077777777777007777777770077777777007777777777770077777777077777777777700000000000000000000000000000000000
+00000000000000b00000000000700000700000700000700000077000000000777700000000077000000007777000000000700000000000000000000000000000
+0000000000000bbb0000000000070007000070070007007000777700000777777777700000777700007777777777000000070000000000000000000000000000
+0070070000000bbb0000000000777777700070777777707007777770007777777777770007777770077777777777700000700000000000000000000000000000
+000770000bbbbbbbbbbb000007707770770077707770777077077077007770077007770077077077077700770077700000070000000000000000000000000000
+00077000bbbbbbbbbbbbb00077777777777007777777770077777777007777777777770077777777077777777777700000700000000000000000000000000000
 00700700bbbbbbbbbbbbb00070777777707000777777700007077070007777777777770000700700077777777777700000000000000000000000000000000000
 00000000bbbbbbbbbbbbb00070700000707000700000700070000007000007700770000007077070000077007700000000000000000000000000000000000000
 00000000bbbbbbbbbbbbb00000077077000007000000070007000070000077077077000070700707000770770770000000000000000000000000000000000000

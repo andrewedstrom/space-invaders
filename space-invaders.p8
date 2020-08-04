@@ -105,11 +105,12 @@ function make_player()
                 sspr(sprite_x,8,self.width,self.height,self.x,self.y)
             end
 
+            -- show life remaining sprites
             if lives_remaining > 0 then
-                sspr(8,0,self.width,self.height,4,120)
+                sspr(8,0,self.width,self.height,2,120)
             end
             if lives_remaining == 2 then
-                sspr(8,0,self.width,self.height,19,120)
+                sspr(8,0,self.width,self.height,17,120)
             end
 
         end,

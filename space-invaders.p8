@@ -107,10 +107,10 @@ function make_player()
 
             -- show life remaining sprites
             if lives_remaining > 0 then
-                sspr(8,0,self.width,self.height,2,120)
+                sspr(8,0,self.width,self.height,2,120,self.width-2,self.height-2)
             end
             if lives_remaining == 2 then
-                sspr(8,0,self.width,self.height,17,120)
+                sspr(8,0,self.width,self.height,15,120,self.width-2,self.height-2)
             end
 
         end,
@@ -120,7 +120,7 @@ function make_player()
                 self:check_if_shot()
             else
                 self.death_counter+=1
-                if self.death_counter > 45 then
+                if self.death_counter > 50 then
                     player_is_dying = false
                     lives_remaining-=1
                     self.death_counter=0

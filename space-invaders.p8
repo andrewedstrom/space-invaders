@@ -89,16 +89,6 @@ function _draw()
     end
 
     line(0,118,128,118,11)
-    print(life_icons(), 4, 120, 11)
-end
-
-function life_icons()
-    local icons=""
-    local i
-    for i = 1,lives_remaining do
-        icons=icons.."\x92"
-    end
-    return icons
 end
 
 function make_player()
@@ -114,6 +104,14 @@ function make_player()
                 end
                 sspr(sprite_x,8,self.width,self.height,self.x,self.y)
             end
+
+            if lives_remaining > 0 then
+                sspr(8,0,self.width,self.height,4,120)
+            end
+            if lives_remaining == 2 then
+                sspr(8,0,self.width,self.height,19,120)
+            end
+
         end,
         update=function(self)
             if not player_is_dying then
@@ -121,7 +119,7 @@ function make_player()
                 self:check_if_shot()
             else
                 self.death_counter+=1
-                if self.death_counter > 20 then
+                if self.death_counter > 45 then
                     player_is_dying = false
                     lives_remaining-=1
                     self.death_counter=0
@@ -224,7 +222,7 @@ function make_invader(x,y)
                 if time_to_move then
                     self:move()
                 end
-                if not player_is_dying and rnd(600) > 599 then
+                if not player_is_dying and rnd(700) > 699 then
                     make_alien_bullet(self.x+self.width/2,self.y)
                 end
             else
@@ -313,4 +311,4 @@ __sfx__
 011300000115500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500105001050010500105
 011300000015500100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100
 011300000515500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000a00000060003660036500366008650006500564000620006100065001650016500063000620016100062000610006000060000600006000060000600006000060000600006000060000600006000060000600
+000c00000060003660036500366008650006500564000620006100065001650016500063000640016100062000600006000060000600006000060000600006000060000600006000060000600006000060000600
